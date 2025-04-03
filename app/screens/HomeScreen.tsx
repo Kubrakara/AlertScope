@@ -7,6 +7,7 @@ import {
   Modal,
   Text,
   Pressable,
+  TextInput,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import RNPickerSelect from "react-native-picker-select";
@@ -86,6 +87,7 @@ const HomeScreen: React.FC = () => {
   const [filterModalOpen, setFilterModalOpen] = useState(false);
   const [filterState, setFilterState] = useState("");
   const [filterType, setFilterType] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
 
   const [stateOptions, setStateOptions] = useState<
     { label: string; value: string }[]
@@ -108,7 +110,6 @@ const HomeScreen: React.FC = () => {
         new Set(sliced.map((d) => d.incidentType))
       ).filter(Boolean);
 
-      // 👇 Etiketlere tam isim + kod gösterimi ekleniyor
       setStateOptions([
         { label: "All States", value: "" },
         ...uniqueStates.map((s) => ({
@@ -142,12 +143,19 @@ const HomeScreen: React.FC = () => {
     const filteredData = disasters.filter((d) => {
       const stateMatch = filterState ? d.state === filterState : true;
       const typeMatch = filterType ? d.incidentType === filterType : true;
-      return stateMatch && typeMatch;
+      const searchMatch = searchQuery
+        ? d.declarationTitle.toLowerCase().includes(searchQuery.toLowerCase())
+        : true;
+      return stateMatch && typeMatch && searchMatch;
     });
 
     setFiltered(filteredData);
-    setFilterModalOpen(false);
   };
+
+  // Arama değiştiğinde filtreleme tetiklenir
+  useEffect(() => {
+    handleFilterApply();
+  }, [searchQuery, filterState, filterType]);
 
   if (loading) {
     return (
@@ -160,10 +168,22 @@ const HomeScreen: React.FC = () => {
 
   return (
     <View className="flex-1 bg-neutral-800 px-4 py-6">
-      {/* Filter Icon */}
-      <View className="flex-row justify-end mb-4">
-        <TouchableOpacity onPress={() => setFilterModalOpen(true)}>
-          <Ionicons name="filter-outline" size={28} color="white" />
+      {/* Arama ve Filtre Alanı */}
+      <View className="flex-row items-center justify-between mb-4 space-x-2">
+        <View className="flex-1 bg-neutral-700 rounded-lg px-3">
+          <TextInput
+            placeholder="Search by title..."
+            placeholderTextColor="#aaa"
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            className="text-white py-2"
+          />
+        </View>
+        <TouchableOpacity
+          onPress={() => setFilterModalOpen(true)}
+          className="p-2"
+        >
+          <Ionicons name="filter-outline" size={24} color="white" />
         </TouchableOpacity>
       </View>
 
@@ -220,7 +240,10 @@ const HomeScreen: React.FC = () => {
                 <Text className="text-white">Cancel</Text>
               </Pressable>
               <Pressable
-                onPress={handleFilterApply}
+                onPress={() => {
+                  handleFilterApply();
+                  setFilterModalOpen(false);
+                }}
                 className="px-4 py-2 bg-blue-600 rounded-lg"
               >
                 <Text className="text-white font-semibold">Apply</Text>
