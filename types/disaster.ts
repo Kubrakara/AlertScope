@@ -4,4 +4,11 @@ export interface Disaster {
   declarationTitle: string;
   incidentType: string;
   declarationDate: string;
+
+  declarationType: string;
+  designatedArea: string;
+  incidentBeginDate: string;
+  incidentEndDate: string;
+  femaDeclarationString: string;
+  region: number;
 }
