@@ -1,6 +1,6 @@
 import React from "react";
 import { View, Text } from "react-native";
-import { Disaster } from "../types/disaster";
+import { Disaster } from "../../types/disaster";
 
 type Props = {
   data: Disaster;
