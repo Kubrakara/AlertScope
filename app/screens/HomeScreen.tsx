@@ -10,75 +10,10 @@ import {
   Button,
   ScrollView,
 } from "react-native";
+import { Ionicons } from "@expo/vector-icons"; // en yukarıya ekle
 import DisasterCard from "../components/DisasterCard";
 import { Disaster } from "../../types/disaster";
-
-// 🔁 Eyalet kodlarını isimlerle eşle
-const stateNameMap: Record<string, string> = {
-  AL: "Alabama",
-  AK: "Alaska",
-  AZ: "Arizona",
-  AR: "Arkansas",
-  CA: "California",
-  CO: "Colorado",
-  CT: "Connecticut",
-  DE: "Delaware",
-  FL: "Florida",
-  GA: "Georgia",
-  HI: "Hawaii",
-  ID: "Idaho",
-  IL: "Illinois",
-  IN: "Indiana",
-  IA: "Iowa",
-  KS: "Kansas",
-  KY: "Kentucky",
-  LA: "Louisiana",
-  ME: "Maine",
-  MD: "Maryland",
-  MA: "Massachusetts",
-  MI: "Michigan",
-  MN: "Minnesota",
-  MS: "Mississippi",
-  MO: "Missouri",
-  MT: "Montana",
-  NE: "Nebraska",
-  NV: "Nevada",
-  NH: "New Hampshire",
-  NJ: "New Jersey",
-  NM: "New Mexico",
-  NY: "New York",
-  NC: "North Carolina",
-  ND: "North Dakota",
-  OH: "Ohio",
-  OK: "Oklahoma",
-  OR: "Oregon",
-  PA: "Pennsylvania",
-  RI: "Rhode Island",
-  SC: "South Carolina",
-  SD: "South Dakota",
-  TN: "Tennessee",
-  TX: "Texas",
-  UT: "Utah",
-  VT: "Vermont",
-  VA: "Virginia",
-  WA: "Washington",
-  WV: "West Virginia",
-  WI: "Wisconsin",
-  WY: "Wyoming",
-  DC: "District of Columbia",
-};
-
-const incidentTypes = [
-  "ALL",
-  "Flood",
-  "Fire",
-  "Hurricane",
-  "Tornado",
-  "Earthquake",
-  "Snowstorm",
-  "Severe Storm",
-  "Tropical Storm",
-];
+import { stateNameMap, incidentTypes } from "../constants/disasterFilters";
 
 const HomeScreen: React.FC = () => {
   const [disasters, setDisasters] = useState<Disaster[]>([]);
@@ -104,7 +39,7 @@ const HomeScreen: React.FC = () => {
       if (type && type !== "ALL") filters.push(`incidentType eq '${type}'`);
 
       if (filters.length > 0) {
-        url += `?$filter=${filters.join(" and ")}&$orderby=declarationDate desc&$top=400`;
+        url += `?$filter=${filters.join(" and ")}&$orderby=declarationDate desc&$top=100`;
       } else {
         url += "?$orderby=declarationDate desc&$top=100";
       }
@@ -152,19 +87,23 @@ const HomeScreen: React.FC = () => {
   return (
     <View className="flex-1 bg-neutral-800 px-4 py-6">
       {/* Arama ve filtre butonu */}
-      <View className="mb-4">
-        <TextInput
-          placeholder="Search disasters..."
-          placeholderTextColor="#aaa"
-          value={searchQuery}
-          onChangeText={setSearchQuery}
-          className="text-white bg-neutral-700 px-3 py-2 rounded-lg"
-        />
+      {/* Arama ve filtre yan yana */}
+      <View className="flex-row items-center space-x-2 gap-3 mb-4">
+        <View className="flex-1">
+          <TextInput
+            placeholder="Search disasters..."
+            placeholderTextColor="#aaa"
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            className="text-white bg-neutral-700 px-3 py-3 rounded-lg"
+          />
+        </View>
+
         <TouchableOpacity
           onPress={() => setModalVisible(true)}
-          className="mt-2 bg-blue-600 py-2 rounded-lg"
+          className="bg-red-600 p-3 rounded-lg justify-center items-center"
         >
-          <Text className="text-center text-white font-bold">Open Filters</Text>
+          <Ionicons name="filter-outline" size={20} color="#fff" />
         </TouchableOpacity>
       </View>
 
@@ -194,7 +133,13 @@ const HomeScreen: React.FC = () => {
       {/* Modal: Filtre Seçimi */}
       <Modal visible={modalVisible} animationType="slide" transparent>
         <View className="flex-1 justify-center items-center bg-black/50 px-4">
-          <View className="bg-white p-6 rounded-xl w-full max-w-md">
+          <View
+            className="bg-white p-6 rounded-xl w-full max-w-md"
+            style={{
+              maxHeight: "85%", // 📏 Modal yüksekliğini sınırlıyoruz
+              width: "100%",
+            }}
+          >
             <ScrollView>
               <Text className="text-lg font-bold mb-2">Filter Disasters</Text>
 
@@ -205,7 +150,7 @@ const HomeScreen: React.FC = () => {
                   onPress={() => setSelectedState("ALL")}
                   style={{
                     backgroundColor:
-                      selectedState === "ALL" ? "#2563eb" : "#e5e7eb",
+                      selectedState === "ALL" ? "red" : "#e5e7eb",
                     padding: 6,
                     margin: 4,
                     borderRadius: 6,
@@ -225,7 +170,7 @@ const HomeScreen: React.FC = () => {
                     onPress={() => setSelectedState(code)}
                     style={{
                       backgroundColor:
-                        selectedState === code ? "#2563eb" : "#e5e7eb",
+                        selectedState === code ? "red" : "#e5e7eb",
                       padding: 6,
                       margin: 4,
                       borderRadius: 6,
@@ -251,7 +196,7 @@ const HomeScreen: React.FC = () => {
                     onPress={() => setSelectedIncidentType(type)}
                     style={{
                       backgroundColor:
-                        selectedIncidentType === type ? "#2563eb" : "#e5e7eb",
+                        selectedIncidentType === type ? "red" : "#e5e7eb",
                       padding: 6,
                       margin: 4,
                       borderRadius: 6,
@@ -270,18 +215,50 @@ const HomeScreen: React.FC = () => {
               </View>
 
               {/* Butonlar */}
-              <View className="mt-6 flex-row justify-between">
-                <Button title="Apply" onPress={handleApplyFilters} />
-                <Button
-                  title="Reset"
-                  onPress={handleResetFilters}
-                  color="gray"
-                />
-                <Button
-                  title="Cancel"
+              <View className="flex-row justify-between mt-6">
+                <TouchableOpacity
                   onPress={() => setModalVisible(false)}
-                  color="red"
-                />
+                  style={{
+                    backgroundColor: "red",
+                    paddingVertical: 10,
+                    paddingHorizontal: 16,
+                    borderRadius: 12,
+                  }}
+                >
+                  <Text style={{ color: "white", fontWeight: "bold" }}>
+                    Cancel
+                  </Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  onPress={handleResetFilters}
+                  style={{
+                    backgroundColor: "gray",
+                    paddingVertical: 10,
+                    paddingHorizontal: 16,
+                    borderRadius: 12,
+                    marginRight: 8,
+                  }}
+                >
+                  <Text style={{ color: "white", fontWeight: "bold" }}>
+                    Reset
+                  </Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  onPress={handleApplyFilters}
+                  style={{
+                    backgroundColor: "green",
+                    paddingVertical: 10,
+                    paddingHorizontal: 16,
+                    borderRadius: 12,
+                    marginRight: 8,
+                  }}
+                >
+                  <Text style={{ color: "white", fontWeight: "bold" }}>
+                    Apply
+                  </Text>
+                </TouchableOpacity>
               </View>
             </ScrollView>
           </View>
