@@ -6,16 +6,14 @@ import {
   TouchableOpacity,
   Modal,
   Text,
-  Pressable,
   TextInput,
+  Button,
+  ScrollView,
 } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
-import RNPickerSelect from "react-native-picker-select";
-import { fetchDisasters } from "../../utils/api";
 import DisasterCard from "../components/DisasterCard";
 import { Disaster } from "../../types/disaster";
 
-// 🔁 State kodlarını tam isimleriyle eşleyen harita
+// 🔁 Eyalet kodlarını isimlerle eşle
 const stateNameMap: Record<string, string> = {
   AL: "Alabama",
   AK: "Alaska",
@@ -68,252 +66,259 @@ const stateNameMap: Record<string, string> = {
   WI: "Wisconsin",
   WY: "Wyoming",
   DC: "District of Columbia",
-  PR: "Puerto Rico",
-  GU: "Guam",
-  VI: "U.S. Virgin Islands",
-  AS: "American Samoa",
-  MP: "Northern Mariana Islands",
 };
+
+const incidentTypes = [
+  "ALL",
+  "Flood",
+  "Fire",
+  "Hurricane",
+  "Tornado",
+  "Earthquake",
+  "Snowstorm",
+  "Severe Storm",
+  "Tropical Storm",
+];
 
 const HomeScreen: React.FC = () => {
   const [disasters, setDisasters] = useState<Disaster[]>([]);
-  const [filtered, setFiltered] = useState<Disaster[]>([]);
   const [loading, setLoading] = useState(true);
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedDisaster, setSelectedDisaster] = useState<Disaster | null>(
     null
   );
-  const [filterModalOpen, setFilterModalOpen] = useState(false);
-  const [filterState, setFilterState] = useState("");
-  const [filterType, setFilterType] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
 
-  const [stateOptions, setStateOptions] = useState<
-    { label: string; value: string }[]
-  >([]);
-  const [incidentTypeOptions, setIncidentTypeOptions] = useState<
-    { label: string; value: string }[]
-  >([]);
+  const [selectedState, setSelectedState] = useState("ALL");
+  const [selectedIncidentType, setSelectedIncidentType] = useState("ALL");
+
+  // 🔄 FEMA API'den veri çek
+  const fetchDisasters = async (state?: string, type?: string) => {
+    setLoading(true);
+    try {
+      let url =
+        "https://www.fema.gov/api/open/v2/DisasterDeclarationsSummaries";
+      const filters: string[] = [];
+
+      if (state && state !== "ALL") filters.push(`state eq '${state}'`);
+      if (type && type !== "ALL") filters.push(`incidentType eq '${type}'`);
+
+      if (filters.length > 0) {
+        url += `?$filter=${filters.join(" and ")}&$orderby=declarationDate desc&$top=400`;
+      } else {
+        url += "?$orderby=declarationDate desc&$top=100";
+      }
+
+      console.log("📡 API URL:", url);
+      const response = await fetch(url);
+      const data = await response.json();
+
+      console.log(
+        "📦 Veri sayısı:",
+        data.DisasterDeclarationsSummaries?.length
+      );
+      setDisasters(data.DisasterDeclarationsSummaries || []);
+    } catch (error) {
+      console.error("❌ API fetch error:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const loadData = async () => {
-      const data = await fetchDisasters();
-      const sliced = data.slice(0, 100);
-      setDisasters(sliced);
-      setFiltered(sliced);
-
-      const uniqueStates = Array.from(
-        new Set(sliced.map((d) => d.state))
-      ).filter(Boolean);
-      const uniqueTypes = Array.from(
-        new Set(sliced.map((d) => d.incidentType))
-      ).filter(Boolean);
-
-      setStateOptions([
-        { label: "All States", value: "" },
-        ...uniqueStates.map((s) => ({
-          label: `${stateNameMap[s] || s} (${s})`,
-          value: s,
-        })),
-      ]);
-
-      setIncidentTypeOptions([
-        { label: "All Types", value: "" },
-        ...uniqueTypes.map((t) => ({ label: t, value: t })),
-      ]);
-
-      setLoading(false);
-    };
-
-    loadData();
+    fetchDisasters();
   }, []);
+
+  const handleApplyFilters = () => {
+    fetchDisasters(selectedState, selectedIncidentType);
+    setModalVisible(false);
+  };
+
+  const handleResetFilters = () => {
+    setSelectedState("ALL");
+    setSelectedIncidentType("ALL");
+    fetchDisasters();
+    setModalVisible(false);
+  };
 
   const handleCardPress = (disaster: Disaster) => {
     setSelectedDisaster(disaster);
-    setModalVisible(true);
   };
 
-  const handleCloseModal = () => {
-    setModalVisible(false);
-    setSelectedDisaster(null);
-  };
-
-  const handleFilterApply = () => {
-    const filteredData = disasters.filter((d) => {
-      const stateMatch = filterState ? d.state === filterState : true;
-      const typeMatch = filterType ? d.incidentType === filterType : true;
-      const searchMatch = searchQuery
-        ? d.declarationTitle.toLowerCase().includes(searchQuery.toLowerCase())
-        : true;
-      return stateMatch && typeMatch && searchMatch;
-    });
-
-    setFiltered(filteredData);
-  };
-
-  useEffect(() => {
-    handleFilterApply();
-  }, [searchQuery, filterState, filterType]);
-
-  if (loading) {
-    return (
-      <ActivityIndicator
-        className="flex-1 justify-center items-center"
-        size="large"
-      />
-    );
-  }
+  const filteredDisasters = disasters.filter((d) =>
+    d.declarationTitle.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   return (
     <View className="flex-1 bg-neutral-800 px-4 py-6">
-      {/* Arama ve Filtre Butonu */}
-      <View className="flex-row items-center space-x-3 mb-4">
-        <View className="flex-1 bg-neutral-700 rounded-lg px-3 py-2">
-          <TextInput
-            placeholder="Search disasters..."
-            placeholderTextColor="#aaa"
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-            className="text-white"
-          />
-        </View>
+      {/* Arama ve filtre butonu */}
+      <View className="mb-4">
+        <TextInput
+          placeholder="Search disasters..."
+          placeholderTextColor="#aaa"
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+          className="text-white bg-neutral-700 px-3 py-2 rounded-lg"
+        />
         <TouchableOpacity
-          onPress={() => setFilterModalOpen(true)}
-          className="bg-red-700 p-2 rounded-lg"
+          onPress={() => setModalVisible(true)}
+          className="mt-2 bg-blue-600 py-2 rounded-lg"
         >
-          <Ionicons name="filter-outline" size={22} color="white" />
+          <Text className="text-center text-white font-bold">Open Filters</Text>
         </TouchableOpacity>
       </View>
 
-      {/* Filter Modal */}
-      <Modal visible={filterModalOpen} animationType="fade" transparent>
-        <View className="flex-1 justify-end bg-black/50">
-          <View className="bg-neutral-900 p-6 rounded-t-3xl space-y-4">
-            <Text className="text-white text-lg font-bold">
-              Filter Disasters
+      {/* Liste */}
+      {loading ? (
+        <ActivityIndicator size="large" color="#fff" />
+      ) : (
+        <>
+          {filteredDisasters.length === 0 ? (
+            <Text className="text-white text-center mt-4">
+              No disasters found.
             </Text>
+          ) : (
+            <FlatList
+              data={filteredDisasters}
+              keyExtractor={(item, index) => `${item.disasterNumber}-${index}`}
+              renderItem={({ item }) => (
+                <TouchableOpacity onPress={() => handleCardPress(item)}>
+                  <DisasterCard data={item} />
+                </TouchableOpacity>
+              )}
+            />
+          )}
+        </>
+      )}
 
-            <View>
-              <Text className="text-gray-300 mb-1">State</Text>
-              <View className="bg-neutral-700 rounded-md">
-                <RNPickerSelect
-                  onValueChange={setFilterState}
-                  value={filterState}
-                  items={stateOptions}
-                  placeholder={{ label: "Select a state...", value: "" }}
+      {/* Modal: Filtre Seçimi */}
+      <Modal visible={modalVisible} animationType="slide" transparent>
+        <View className="flex-1 justify-center items-center bg-black/50 px-4">
+          <View className="bg-white p-6 rounded-xl w-full max-w-md">
+            <ScrollView>
+              <Text className="text-lg font-bold mb-2">Filter Disasters</Text>
+
+              {/* State Seçimi */}
+              <Text className="font-semibold mt-2 mb-1">State:</Text>
+              <View className="flex-row flex-wrap">
+                <TouchableOpacity
+                  onPress={() => setSelectedState("ALL")}
                   style={{
-                    inputAndroid: { color: "white", padding: 12 },
-                    inputIOS: { color: "white", padding: 12 },
-                    placeholder: { color: "#aaa" },
+                    backgroundColor:
+                      selectedState === "ALL" ? "#2563eb" : "#e5e7eb",
+                    padding: 6,
+                    margin: 4,
+                    borderRadius: 6,
                   }}
+                >
+                  <Text
+                    style={{
+                      color: selectedState === "ALL" ? "white" : "black",
+                    }}
+                  >
+                    All
+                  </Text>
+                </TouchableOpacity>
+                {Object.entries(stateNameMap).map(([code, name]) => (
+                  <TouchableOpacity
+                    key={code}
+                    onPress={() => setSelectedState(code)}
+                    style={{
+                      backgroundColor:
+                        selectedState === code ? "#2563eb" : "#e5e7eb",
+                      padding: 6,
+                      margin: 4,
+                      borderRadius: 6,
+                    }}
+                  >
+                    <Text
+                      style={{
+                        color: selectedState === code ? "white" : "black",
+                      }}
+                    >
+                      {name}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+
+              {/* Incident Type Seçimi */}
+              <Text className="font-semibold mt-4 mb-1">Incident Type:</Text>
+              <View className="flex-row flex-wrap">
+                {incidentTypes.map((type) => (
+                  <TouchableOpacity
+                    key={type}
+                    onPress={() => setSelectedIncidentType(type)}
+                    style={{
+                      backgroundColor:
+                        selectedIncidentType === type ? "#2563eb" : "#e5e7eb",
+                      padding: 6,
+                      margin: 4,
+                      borderRadius: 6,
+                    }}
+                  >
+                    <Text
+                      style={{
+                        color:
+                          selectedIncidentType === type ? "white" : "black",
+                      }}
+                    >
+                      {type}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+
+              {/* Butonlar */}
+              <View className="mt-6 flex-row justify-between">
+                <Button title="Apply" onPress={handleApplyFilters} />
+                <Button
+                  title="Reset"
+                  onPress={handleResetFilters}
+                  color="gray"
+                />
+                <Button
+                  title="Cancel"
+                  onPress={() => setModalVisible(false)}
+                  color="red"
                 />
               </View>
-            </View>
-
-            <View>
-              <Text className="text-gray-300 mb-1">Incident Type</Text>
-              <View className="bg-neutral-700 rounded-md">
-                <RNPickerSelect
-                  onValueChange={setFilterType}
-                  value={filterType}
-                  items={incidentTypeOptions}
-                  placeholder={{ label: "Select type...", value: "" }}
-                  style={{
-                    inputAndroid: { color: "white", padding: 12 },
-                    inputIOS: { color: "white", padding: 12 },
-                    placeholder: { color: "#aaa" },
-                  }}
-                />
-              </View>
-            </View>
-
-            <View className="flex-row justify-end space-x-3 pt-2">
-              <Pressable
-                onPress={() => setFilterModalOpen(false)}
-                className="bg-gray-600 rounded-lg px-4 py-2"
-              >
-                <Text className="text-white">Cancel</Text>
-              </Pressable>
-              <Pressable
-                onPress={() => {
-                  handleFilterApply();
-                  setFilterModalOpen(false);
-                }}
-                className="bg-red-600 rounded-lg px-4 py-2"
-              >
-                <Text className="text-white font-semibold">Apply</Text>
-              </Pressable>
-            </View>
+            </ScrollView>
           </View>
         </View>
       </Modal>
 
-      {/* FlatList */}
-      <FlatList
-        data={filtered}
-        keyExtractor={(item, index) => `${item.disasterNumber}-${index}`}
-        renderItem={({ item }) => (
-          <TouchableOpacity onPress={() => handleCardPress(item)}>
-            <DisasterCard data={item} />
-          </TouchableOpacity>
-        )}
-        ListEmptyComponent={
-          <Text className="text-white text-center mt-4">
-            No disasters found.
-          </Text>
-        }
-      />
-
-      {/* Detail Modal */}
+      {/* Detay Modal */}
       {selectedDisaster && (
-        <Modal
-          animationType="slide"
-          transparent={true}
-          visible={modalVisible}
-          onRequestClose={handleCloseModal}
-        >
+        <Modal animationType="slide" transparent={true} visible={true}>
           <View className="flex-1 justify-center items-center bg-black/50 px-4">
             <View className="bg-neutral-900 rounded-2xl p-6 w-full max-w-xl shadow-lg">
               <Text className="text-white text-2xl font-bold mb-4">
                 {selectedDisaster.declarationTitle}
               </Text>
-
-              <View className="space-y-2">
-                <DetailRow label="State" value={selectedDisaster.state} />
-                <DetailRow
-                  label="Declaration Type"
-                  value={selectedDisaster.declarationType}
-                />
-                <DetailRow
-                  label="Disaster Number"
-                  value={selectedDisaster.disasterNumber}
-                />
-                <DetailRow
-                  label="Incident Type"
-                  value={selectedDisaster.incidentType}
-                />
-                <DetailRow
-                  label="Declaration Date"
-                  value={new Date(
-                    selectedDisaster.declarationDate
-                  ).toLocaleDateString()}
-                />
-                <DetailRow
-                  label="Incident Dates"
-                  value={`${new Date(selectedDisaster.incidentBeginDate).toLocaleDateString()} - ${new Date(selectedDisaster.incidentEndDate).toLocaleDateString()}`}
-                />
-                <DetailRow
-                  label="Designated Area"
-                  value={selectedDisaster.designatedArea}
-                />
-                <DetailRow
-                  label="FEMA String"
-                  value={selectedDisaster.femaDeclarationString}
-                />
-                <DetailRow label="Region" value={selectedDisaster.region} />
-              </View>
-
-              <TouchableOpacity onPress={handleCloseModal} className="mt-6">
+              <DetailRow label="State" value={selectedDisaster.state} />
+              <DetailRow
+                label="Incident Type"
+                value={selectedDisaster.incidentType}
+              />
+              <DetailRow
+                label="Disaster Number"
+                value={selectedDisaster.disasterNumber}
+              />
+              <DetailRow
+                label="Declaration Date"
+                value={new Date(
+                  selectedDisaster.declarationDate
+                ).toLocaleDateString()}
+              />
+              <DetailRow
+                label="Designated Area"
+                value={selectedDisaster.designatedArea}
+              />
+              <TouchableOpacity
+                onPress={() => setSelectedDisaster(null)}
+                className="mt-6"
+              >
                 <View className="bg-red-600 py-2 rounded-xl">
                   <Text className="text-center text-white font-semibold text-base">
                     Close
@@ -328,7 +333,7 @@ const HomeScreen: React.FC = () => {
   );
 };
 
-// Reusable detail row component
+// 🔁 Reusable detail row
 const DetailRow = ({
   label,
   value,
@@ -336,7 +341,7 @@ const DetailRow = ({
   label: string;
   value: string | number;
 }) => (
-  <View className="flex-row justify-between">
+  <View className="flex-row justify-between my-1">
     <Text className="text-gray-400">{label}</Text>
     <Text className="text-white font-medium">{value}</Text>
   </View>
