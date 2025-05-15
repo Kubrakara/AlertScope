@@ -22,3 +22,7 @@ Bu proje, aşağıdaki FEMA kaynağını kullanmaktadır:
 - JSON parsing
 - (İsteğe bağlı) Pandas / Flask / FastAPI (Kullanım senaryonuza göre eklenebilir)
 
+---
+<p align="center">
+  <img src="./alert.jpg" alt="AlertScope Preview" width="600"/>
+</p>
