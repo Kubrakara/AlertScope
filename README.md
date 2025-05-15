@@ -20,8 +20,6 @@ Bu proje, aşağıdaki FEMA kaynağını kullanmaktadır:
 - Python 3.10+
 - Requests
 - JSON parsing
-- (İsteğe bağlı) Pandas / Flask / FastAPI (Kullanım senaryonuza göre eklenebilir)
-
 ---
 ## 📸 Uygulama Ekran Görüntüsü
 
