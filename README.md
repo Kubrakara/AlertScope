@@ -24,5 +24,5 @@ Bu proje, aşağıdaki FEMA kaynağını kullanmaktadır:
 
 ---
 <p align="center">
-  <img src="./alert.jpg" alt="AlertScope Preview" width="600"/>
+  <img src="./alert.jpg" alt="AlertScope Preview" width="400"/>
 </p>
