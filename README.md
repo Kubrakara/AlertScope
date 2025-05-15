@@ -1,50 +1,24 @@
-# Welcome to your Expo app 👋
+# AlertScope
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+**AlertScope**, afet bildirimlerini merkezi ve yapılandırılmış bir formatta kullanıcıya sunmayı amaçlayan bir açık kaynak projedir. Proje, ABD Federal Acil Durum Yönetim Ajansı (FEMA) tarafından sağlanan [OpenFEMA API](https://www.fema.gov/about/openfema/api) üzerinden veri çekerek gerçek zamanlı afet uyarılarını izlemeye ve analiz etmeye olanak tanır.
 
-## Get started
+## 🚨 Proje Amacı
 
-1. Install dependencies
+AlertScope, afet yönetimi, kriz bilgilendirmesi ve risk analizi gibi alanlarda operasyonel verimliliği artırmayı hedefleyen modern bir uyarı takip sistemidir. Uygulama, API üzerinden alınan resmi bildirimleri filtreleyerek uçtan uca bir uyarı yönetimi akışı sağlar.
 
-   ```bash
-   npm install
-   ```
+## 🔗 Kullanılan API
 
-2. Start the app
+Bu proje, aşağıdaki FEMA kaynağını kullanmaktadır:
 
-   ```bash
-    npx expo start
-   ```
+- **OpenFEMA API**
+  - URL: [https://www.fema.gov/about/openfema/api](https://www.fema.gov/about/openfema/api)
+  - Kullanım Amacı: Afet olayları, bildirimler, tahliye bilgileri ve bölgesel uyarıların elde edilmesi.
+  - API Endpoint: `https://www.fema.gov/api/open/v2/DisasterDeclarationsSummaries`
 
-In the output, you'll find options to open the app in a
+## ⚙️ Teknolojiler
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+- Python 3.10+
+- Requests
+- JSON parsing
+- (İsteğe bağlı) Pandas / Flask / FastAPI (Kullanım senaryonuza göre eklenebilir)
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
-
-```bash
-npm run reset-project
-```
-
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
-
-## Learn more
-
-To learn more about developing your project with Expo, look at the following resources:
-
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
-
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
