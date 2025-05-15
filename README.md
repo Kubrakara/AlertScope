@@ -23,6 +23,15 @@ Bu proje, aşağıdaki FEMA kaynağını kullanmaktadır:
 - (İsteğe bağlı) Pandas / Flask / FastAPI (Kullanım senaryonuza göre eklenebilir)
 
 ---
-<p align="center">
-  <img src="./alert.jpg" alt="AlertScope Preview" width="400"/>
-</p>
+## 📸 Uygulama Ekran Görüntüsü
+
+Aşağıda AlertScope ana ekranına ait örnek bir görüntü yer almaktadır:
+
+<table>
+  <tr>
+    <td align="center">
+      <img src="./alert.jpg" alt="Ana Ekran" width="200"/><br/>
+      <sub>Ana Ekran</sub>
+    </td>
+  </tr>
+</table>
